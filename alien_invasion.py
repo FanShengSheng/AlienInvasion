@@ -4,6 +4,7 @@ import pygame
 
 from settings import Settings
 from ship import Ship
+from bullet import Bullet
 
 class AlienInvasion:
     """管理游戏资源和行为的类"""
@@ -24,6 +25,8 @@ class AlienInvasion:
 
         self.ship = Ship(self)
 
+        self.bullets = pygame.sprite.Group()
+
         # 设置背景色
         self.bg_color = self.settings.bg_color
 
@@ -35,6 +38,8 @@ class AlienInvasion:
             self.ship.moving_left = True
         elif event.key == pygame.K_q:
             sys.exit()
+        elif event.key == pygame.K_SPACE:
+            self._fire_bullet()
 
     def _event_keyup_events(self, event):
         """响应松开"""
@@ -42,6 +47,12 @@ class AlienInvasion:
             self.ship.moving_right = False
         elif event.key == pygame.K_LEFT:
             self.ship.moving_left = False
+
+    def _fire_bullet(self):
+        """创建一颗子弹，并将其加入编组bullets中"""
+        if len(self.bullets) < self.settings.bullet_allowed:
+            new_bullet = Bullet(self)
+            self.bullets.add(new_bullet)
 
     def _check_events(self):
         """响应按键和鼠标事件"""
@@ -60,14 +71,27 @@ class AlienInvasion:
 
         self.ship.blitme()
 
+        for bullet in self.bullets.sprites():
+            bullet.draw_bullet()
         # 让最近绘制的屏幕可见
         pygame.display.flip()
+
+    def _update_bullets(self):
+        """更新子弹的位置并删除消失的子弹"""
+        # 更新子弹的位置
+        self.bullets.update()
+
+        # 删除消失的子弹
+        for bullet in self.bullets.copy():
+            if bullet.rect.bottom <= 0:
+                self.bullets.remove(bullet)
 
     def run_game(self):
         """开始游戏的主循环"""
         while True:
             self._check_events()
             self.ship.update()
+            self._update_bullets()
             self._update_sceen()
 
 
